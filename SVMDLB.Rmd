@@ -1,0 +1,82 @@
+---
+title: "SVM via Deep Learning"
+author: "SDMLAB"
+date: \today
+fontsize: 11pt
+output:
+   pdf_document:
+     includes:
+       in_header: Markdown.tex
+     number_sections: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+# ESL mixture example
+
+```{r, fig.width = 8, fig.height = 8, results = 'hide'}
+rm(list = ls())
+source('SVMDLB_R.R')
+source('DL_SVMDLB.R')
+# data generation
+load("ESL.mixture.rda")
+set.seed(15)
+x = ESL.mixture$x
+y = ESL.mixture$y
+y[1:100] = -1
+n = length(y)
+number_lambdas = 100
+number_nodes = 10
+degree = 1
+fit = SVMDLB(y, x, number_nodes = number_nodes, number_lambdas = number_lambdas,
+             degree = degree, lambda_max = 10, lambda_max_min_ratio = 1e-10, 
+             mu = 0, sd = 1, max_iterations = 1000, epsilon_iterations = 1e-4,
+             verbose = T)
+
+par(mfrow = c(1, 2), pty = "s")
+plot(fit$iteration_list, xlab = "lambda index", 
+     ylab = "Number of iterations", type = "l",
+     main = "bspline")
+plot(fit$number_nodes_list, xlab = "lambda index", 
+     ylab = "Number of active nodes", type = "l",
+     main = "bspline")
+
+par(mfrow = c(2, 2), pty = "s")
+n_grid = 50
+px1 = seq(min(x[, 1]), max(x[, 1]), length = n_grid)
+px2 = seq(min(x[, 2]), max(x[, 2]), length = n_grid)
+xgrid = expand.grid(px1, px2)
+
+for (k in 1:number_lambdas)
+{
+   res = fit[[k]]
+   plot(x, type = "n", xlab = expression(x[1]), ylab = expression(x[2]),
+        main = k)
+   func = rep(0, n_grid^2)
+   if (res$number_nodes > 0)
+   {
+      for(m in 1 : res$number_nodes)
+      {
+         func = func + res$gamma[m] * 
+                bspline(res$alpha1[m] + res$beta1[m] * xgrid[ ,1], res$active_nodes[m]) *
+                bspline(res$alpha2[m] + res$beta2[m] * xgrid[ ,2], res$active_nodes[m])
+      }
+   }
+   points(xgrid[(sign(func) == -1), ], col = "blue", cex = 0.1)
+   points(xgrid[(sign(func) == 1), ], col = "orange", cex = 0.1)
+   func = matrix(func, n_grid, n_grid)
+   contour(px1, px2, func, level = 0, add = TRUE, lwd = 1, 
+           drawlabels = FALSE, col = "black", lty = 1)
+   points(x[1:100,], col = "blue", cex = 1.2)
+   points(x[101:200,], col = "orange", cex = 1.2)
+}
+yhat = sign(fit[[1]]$fitted_value)
+table(y, yhat) / 100
+fit$number_nodes_list
+```
+
+```{r}
+fit$lambda_list == fit_cpp$lambda_list
+fit[[4]]$gamma 
+```
+
