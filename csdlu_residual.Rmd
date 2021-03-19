@@ -1,0 +1,279 @@
+---
+title: "test under contraints of intervals"
+author: "SDMLAB"
+date: \today
+fontsize: 12pt
+output:
+   pdf_document:
+     includes:
+       in_header: Markdown.tex
+     number_sections: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+# data generations
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE, fig.align='center', fig.width=5, fig.height=5}
+rm(list = ls())
+source("lib_SDLU.R")
+source("csdlu-test.R")
+set.seed(5)
+n = 500
+x = sort(runif(n, 0, 1))
+f = 2.5 * x + 0.2 * sin((3 * x)^2)
+y = f + rnorm(n) * 0.1
+par(mfrow = c(1, 1))
+plot(x, y, col = "grey")
+lines(x, f, col = "black")
+```
+
+
+
+# RESIDUAL FITTING PART - node list: 4, 8, 16, 32, 64
+# baseline
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE, fig.align='center', fig.width=7, fig.height=3.5}
+set.seed(3)
+lambdas = 0
+number_nodes = 4
+range = max(x) - min(x)
+width = c(1, 2)
+widths = runif(number_nodes, width[1], width[2])
+initial_values = initial_values_SDLU(x, number_nodes, widths)
+beta = initial_values$beta
+alpha1 = initial_values$alpha1
+alpha0 = initial_values$alpha0
+
+# initial plot
+initial_planes = matrix(0, n, number_nodes)
+initial_act_planes = matrix(0, n, number_nodes)
+for (m in 1 : number_nodes)
+{
+   initial_planes[, m] = alpha0[m] + alpha1[m] * x
+   initial_act_planes[, m] = bspline_linear(initial_planes[, m], 2)
+}
+matplot(x, initial_act_planes, type = "l", lty = 1)
+
+
+fit = sdlu(response = y, predictor = cbind(x), number_nodes = number_nodes, 
+           lambdas = lambdas, initial_bias = 0, 
+           initial_beta = beta, width = width,
+           initial_alpha0 = alpha0, initial_alpha1 = alpha1, 
+           verbose = T)
+```
+
+
+# 1st residual
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE, fig.align='center', fig.width=7, fig.height=3.5}
+residual_1 = y - fit[[1]]$fitted_values
+
+lambdas = 0
+number_nodes = 8
+range = max(x) - min(x)
+width = c(1, 2) / 2
+widths = runif(number_nodes, width[1], width[2])
+initial_values = initial_values_SDLU(x, number_nodes, widths)
+beta = initial_values$beta
+alpha1 = initial_values$alpha1
+alpha0 = initial_values$alpha0
+fit1 = sdlu(response = residual_1, predictor = cbind(x), number_nodes = number_nodes, 
+           lambdas = lambdas, initial_bias = 0, 
+           initial_beta = beta, width = width,
+           initial_alpha0 = alpha0, initial_alpha1 = alpha1, 
+           verbose = T)
+
+# initial plot
+initial_planes_1 = matrix(0, n, number_nodes)
+initial_act_planes_1 = matrix(0, n, number_nodes)
+for (m in 1 : number_nodes)
+{
+   initial_planes_1[, m] = alpha0[m] + alpha1[m] * x
+   initial_act_planes_1[, m] = bspline_linear(initial_planes_1[, m], 2)
+}
+```
+
+# 2nd residual
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE, fig.align='center', fig.width=7, fig.height=3.5}
+residual_2 = y - fit[[1]]$fitted_values - fit1[[1]]$fitted_values
+
+lambdas = 0
+number_nodes = 16
+range = max(x) - min(x)
+width = c(1, 2) / 4
+widths = runif(number_nodes, width[1], width[2])
+initial_values = initial_values_SDLU(x, number_nodes, widths)
+beta = initial_values$beta
+alpha1 = initial_values$alpha1
+alpha0 = initial_values$alpha0
+fit2 = sdlu(response = residual_2, predictor = cbind(x), number_nodes = number_nodes, 
+           lambdas = lambdas, initial_bias = 0, 
+           initial_beta = beta, width = width,
+           initial_alpha0 = alpha0, initial_alpha1 = alpha1, 
+           verbose = T)
+
+# initial plot
+initial_planes_2 = matrix(0, n, number_nodes)
+initial_act_planes_2 = matrix(0, n, number_nodes)
+for (m in 1 : number_nodes)
+{
+   initial_planes_2[, m] = alpha0[m] + alpha1[m] * x
+   initial_act_planes_2[, m] = bspline_linear(initial_planes_2[, m], 2)
+}
+```
+
+# 3rd residual
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE, fig.align='center', fig.width=7, fig.height=3.5}
+residual_3 = y - fit[[1]]$fitted_values - fit1[[1]]$fitted_values - fit2[[1]]$fitted_values
+
+lambdas = 0
+number_nodes = 32
+range = max(x) - min(x)
+width = c(1, 2) / 8
+widths = runif(number_nodes, width[1], width[2])
+initial_values = initial_values_SDLU(x, number_nodes, widths)
+beta = initial_values$beta
+alpha1 = initial_values$alpha1
+alpha0 = initial_values$alpha0
+fit3 = sdlu(response = residual_3, predictor = cbind(x), number_nodes = number_nodes, 
+           lambdas = lambdas, initial_bias = 0, 
+           initial_beta = beta, width = width,
+           initial_alpha0 = alpha0, initial_alpha1 = alpha1, 
+           verbose = T)
+
+# initial plot
+initial_planes_3 = matrix(0, n, number_nodes)
+initial_act_planes_3 = matrix(0, n, number_nodes)
+for (m in 1 : number_nodes)
+{
+   initial_planes_3[, m] = alpha0[m] + alpha1[m] * x
+   initial_act_planes_3[, m] = bspline_linear(initial_planes_3[, m], 2)
+}
+```
+
+# 4th residual
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE, fig.align='center', fig.width=7, fig.height=3.5}
+residual_4 = y - fit[[1]]$fitted_values - fit1[[1]]$fitted_values - fit2[[1]]$fitted_values - fit3[[1]]$fitted_values
+
+lambdas = 0
+number_nodes = 64
+range = max(x) - min(x)
+width = c(1, 2) / 16
+widths = runif(number_nodes, width[1], width[2])
+initial_values = initial_values_SDLU(x, number_nodes, widths)
+beta = initial_values$beta
+alpha1 = initial_values$alpha1
+alpha0 = initial_values$alpha0
+fit4 = sdlu(response = residual_4, predictor = cbind(x), number_nodes = number_nodes, 
+           lambdas = lambdas, initial_bias = 0, 
+           initial_beta = beta, width = width,
+           initial_alpha0 = alpha0, initial_alpha1 = alpha1, 
+           verbose = T)
+
+# initial plot
+initial_planes_4 = matrix(0, n, number_nodes)
+initial_act_planes_4 = matrix(0, n, number_nodes)
+for (m in 1 : number_nodes)
+{
+   initial_planes_4[, m] = alpha0[m] + alpha1[m] * x
+   initial_act_planes_4[, m] = bspline_linear(initial_planes_4[, m], 2)
+}
+```
+
+# 5th residual
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE, fig.align='center', fig.width=7, fig.height=3.5}
+residual_5 = y - fit[[1]]$fitted_values - fit1[[1]]$fitted_values - fit2[[1]]$fitted_values - fit3[[1]]$fitted_values - fit4[[1]]$fitted_values
+
+lambdas = 0
+number_nodes = 128
+range = max(x) - min(x)
+width = c(1, 2) / 32
+widths = runif(number_nodes, width[1], width[2])
+initial_values = initial_values_SDLU(x, number_nodes, widths)
+beta = initial_values$beta
+alpha1 = initial_values$alpha1
+alpha0 = initial_values$alpha0
+fit5 = sdlu(response = residual_5, predictor = cbind(x), number_nodes = number_nodes, 
+           lambdas = lambdas, initial_bias = 0, 
+           initial_beta = beta, width = width,
+           initial_alpha0 = alpha0, initial_alpha1 = alpha1, 
+           verbose = T)
+
+# initial plot
+initial_planes_5 = matrix(0, n, number_nodes)
+initial_act_planes_5 = matrix(0, n, number_nodes)
+for (m in 1 : number_nodes)
+{
+   initial_planes_5[, m] = alpha0[m] + alpha1[m] * x
+   initial_act_planes_5[, m] = bspline_linear(initial_planes_5[, m], 2)
+}
+```
+
+
+
+
+# combined graph
+```{r}
+index = 1
+
+par(mfrow = c(1, 2), pty = "s")
+plot(x, y, col = "grey", main = 'Baseline function(f1)')
+lines(x, fit[[1]]$fitted_values, col = "red", lwd = 3)
+matplot(x, t(t(fit[[index]]$active_planes)*fit[[index]]$beta), type = "l", lty = 1, main = 'Activation function', ylab = 'y')
+
+
+par(mfrow = c(1, 3), pty = "s")
+plot(x, y, col = "grey", ylab = 'y', main = 'f2 function')
+lines(x, fit[[1]]$fitted_values + fit1[[1]]$fitted_values, col = "red", lwd = 3)
+matplot(x, t(t(fit1[[index]]$active_planes)*fit1[[index]]$beta), type = "l", lty = 1,
+        ylab = bquote(~sigma), main = 'Activation function - 1st residual')
+plot(x, residual_1, col = "grey", main = 'Fitted 1st residual')
+lines(x, fit1[[1]]$fitted_values, col = "blue", lwd = 2)
+
+plot(x, y, col = "grey", ylab = 'y', main = 'f3 function')
+lines(x, fit[[1]]$fitted_values + fit1[[1]]$fitted_values + fit2[[1]]$fitted_values, col = "red", lwd = 3)
+matplot(x, t(t(fit2[[index]]$active_planes)*fit2[[index]]$beta), type = "l", lty = 1,
+        ylab = bquote(~sigma), main = 'Activation function - 2nd residual')
+plot(x, residual_2, col = "grey", main = 'Fitted 2nd residual')
+lines(x, fit2[[1]]$fitted_values, col = "blue", lwd = 2)
+
+plot(x, y, col = "grey", ylab = 'y', main = 'f4 function')
+lines(x, fit[[1]]$fitted_values + fit1[[1]]$fitted_values + fit2[[1]]$fitted_values + fit3[[1]]$fitted_values, col = "red", lwd = 3)
+matplot(x, t(t(fit3[[index]]$active_planes)*fit3[[index]]$beta), type = "l", lty = 1,
+        ylab = bquote(~sigma), main = 'Activation function - 3rd residual')
+plot(x, residual_3, col = "grey", main = 'Fitted 3rd residual')
+lines(x, fit3[[1]]$fitted_values, col = "blue", lwd = 2)
+
+plot(x, y, col = "grey", ylab = 'y', main = 'f5 function')
+lines(x, fit[[1]]$fitted_values + fit1[[1]]$fitted_values + fit2[[1]]$fitted_values + fit3[[1]]$fitted_values + fit4[[1]]$fitted_values, col = "red", lwd = 3)
+matplot(x, t(t(fit4[[index]]$active_planes)*fit4[[index]]$beta), type = "l", lty = 1,
+        ylab = bquote(~sigma), main = 'Activation function - 4th residual')
+plot(x, residual_4, col = "grey", main = 'Fitted 4th residual')
+lines(x, fit4[[1]]$fitted_values, col = "blue", lwd = 2)
+
+plot(x, y, col = "grey", ylab = 'y', main = 'f6 function')
+lines(x, fit[[1]]$fitted_values + fit1[[1]]$fitted_values + fit2[[1]]$fitted_values + fit3[[1]]$fitted_values + fit4[[1]]$fitted_values + fit5[[1]]$fitted_values, col = "red", lwd = 3)
+matplot(x, t(t(fit5[[index]]$active_planes)*fit5[[index]]$beta), type = "l", lty = 1,
+        ylab = bquote(~sigma), main = 'Activation function - 5th residual')
+plot(x, residual_5, col = "grey", main = 'Fitted 5th residual')
+lines(x, fit5[[1]]$fitted_values, col = "blue", lwd = 2)
+```
+
+```{r}
+index = 1
+par(mfrow = c(1, 2), pty = "s")
+matplot(x, t(t(fit1[[index]]$active_planes)*fit1[[index]]$beta), type = "l", lty = 1,
+        ylab = bquote(~sigma), main = 'Activation function - 1st residual')
+plot(x, residual_1, col = "grey", main = 'Fitted 1st residual')
+lines(x, fit1[[1]]$fitted_values, col = "blue", lwd = 2)
+
+matplot(x, t(t(fit5[[index]]$active_planes)*fit5[[index]]$beta), type = "l", lty = 1,
+        ylab = bquote(~sigma), main = 'Activation function - 5th residual')
+plot(x, residual_5, col = "grey", main = 'Fitted 5th residual')
+lines(x, fit5[[1]]$fitted_values, col = "blue", lwd = 2)
+
+par(mfrow = c(1, 1), pty = "s")
+plot(x, y, col = "grey", ylab = 'y', main = 'f2 function')
+lines(x, fit[[1]]$fitted_values + fit1[[1]]$fitted_values, col = "red", lwd = 3)
+
+plot(x, y, col = "grey", ylab = 'y', main = 'f6 function')
+lines(x, fit[[1]]$fitted_values + fit1[[1]]$fitted_values + fit2[[1]]$fitted_values + fit3[[1]]$fitted_values + fit4[[1]]$fitted_values + fit5[[1]]$fitted_values, col = "red", lwd = 3)
+```
