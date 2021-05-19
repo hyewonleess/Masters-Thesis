@@ -1,0 +1,125 @@
+---
+title: "Bivariate Tensor product of B-spline activation function"
+author: "SDMLAB"
+date: \today
+fontsize: 11pt
+output:
+   pdf_document:
+     includes:
+       in_header: Markdown.tex
+     number_sections: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+# ESL mixture example
+
+```{r, fig.width = 8, fig.height = 8, results = 'hide'}
+rm(list = ls())
+source('SVMDLB_R.R')
+source('DL_SVMDLB.R')
+
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(graphics)
+library(rgl)
+
+# data generation
+load("ESL.mixture.rda")
+set.seed(15)
+x = ESL.mixture$x
+y = ESL.mixture$y
+y[1:100] = -1
+n = length(y)
+number_lambdas = 100
+number_nodes = 20
+degree = 1
+fit = SVMDLB(y, x, number_nodes = number_nodes, number_lambdas = number_lambdas,
+             degree = degree, lambda_max = 10, lambda_max_min_ratio = 1e-10, 
+             mu = 0, sd = 1, max_iterations = 1000, epsilon_iterations = 1e-4,
+             verbose = T)
+
+# create grid
+par(mfrow = c(2, 2), pty = "s")
+n_grid = 50
+px1 = seq(min(x[, 1]), max(x[, 1]), length = n_grid)
+px2 = seq(min(x[, 2]), max(x[, 2]), length = n_grid)
+xgrid = expand.grid(px1, px2)
+```
+
+
+# Plot b-spline activation function
+```{r}
+par(mfrow = c(1, 1))
+bspline = function(x){
+   1-abs(x)
+}
+
+plot(seq(-1,1), bspline(seq(-1,1)), type = 'l', xaxt = 'n', xlab = "x1(x2)",
+     ylab = "", main = "B-spline Activation function", ylim = c(0, 1))
+lines(seq(-2, -1), rep(0, 2)); lines(seq(1, 2), rep(0, 2)); 
+text(0.2, 0.05, 'center')
+points(0, 0, col = 'red')
+abline(v = 0, lty = 2)
+```
+
+
+# B-spline activation function 
+```{r}
+bspline = function(h)
+{
+   sigma = rep(0, length(h))
+   abs_h = 0
+   for (i in 1:length(h))
+   {
+      abs_h = abs(h[i])
+      if (abs_h < 1)
+      {
+         sigma[i] = 1 - abs_h
+      }
+         
+   }
+   return(sigma)
+}
+```
+
+
+# Tensor product plot
+```{r}
+act_1 = matrix(0, nrow = length(xgrid[,1]), ncol = 1)
+act_2 = matrix(0, nrow = length(xgrid[,2]), ncol = 1)
+
+act = matrix(0, nrow = length(xgrid[,1]), ncol = res$number_nodes)
+
+
+act_1 = bspline(-0.3 + 1 * xgrid[,1])
+act_2 = bspline(1 - 0.8 * xgrid[,2])
+act = act_1 * act_2
+
+
+par(mfrow = c(1, 2))
+matplot(xgrid[,1][1:50], act_1[1:50], type = "l", lty = 1, main = "x1 activation function", xlab = 'x1', ylab = "", col = 'orange')
+matplot(xgrid[,2], act_2, type = "l", lty = 1, main = "x2 activation function", xlab = 'x2', ylab = "", col = 'blue') 
+
+par(mfrow = c(1, 1))
+act = matrix(act, n_grid, n_grid)
+persp(px1, px2, act, col = 'white', cex = 0.2, xlab = "x1", ylab = "x2", zlab = "",
+      main = "Tensor product of B-spline")
+```
+
+
+# 3d surface plot
+```{r}
+res = fit[[30]]
+for(i in 1:res$number_nodes)
+{
+   act_plane = matrix(act[, i], n_grid, n_grid)
+   persp3d(px1, px2, act_plane, add = TRUE, type = 'l', col = 'white', pch = '-', 
+           cex = 0.2, border = 'black', back = 'lines', front = 'lines',
+           theta = 30, phi = 20)
+}
+```
+
+
+
