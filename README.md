@@ -1,5 +1,5 @@
 # SVM
-KU Graduate School Paper Topic: SVM classifier based on B-spline activation function
+KU Graduate School Paper Topic: Bivariate SVM classifier based on B-spline activation function
 
 ## SVM Process
 
